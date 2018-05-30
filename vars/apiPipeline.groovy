@@ -24,10 +24,6 @@ def call(body) {
     }
 
     pipeline {
-        agent {
-            label pipelineParams.agent
-        }
-
         triggers {
             cron(cronSchedule)
         }
