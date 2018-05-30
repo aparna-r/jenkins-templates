@@ -30,12 +30,7 @@ def call(body) {
 
         triggers {
             cron(cronSchedule)
-            gitlab(triggerOnPush: true, triggerOnMergeRequest: true, ciSkip: true, branchFilterType: 'All', includeBranchesSpec: 'develop')
         }
-
-        environment {
-        }
-
         post {
             failure {
                 updateGitlabCommitStatus name: 'build', state: 'failed'
