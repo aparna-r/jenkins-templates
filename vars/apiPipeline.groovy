@@ -3,7 +3,7 @@ def call(body) {
     def pipelineParams= [:]
     pipelineParams.put('application', '')
     pipelineParams.put('email', '')
-    pipelineParams.put('agent', 'build-java8')
+    pipelineParams.put('agent', 'any')
     pipelineParams.put('schedule', '0 0 * * *')
     pipelineParams.put('build_params', '')
     pipelineParams.put('integration_params', '')
