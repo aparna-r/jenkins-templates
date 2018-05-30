@@ -62,13 +62,14 @@ def call(body) {
 
         parameters {
             booleanParam(defaultValue: true, description: '', name: 'build')
-            booleanParam(defaultValue: true, description: "", name: "sanity")
+            booleanParam(defaultValue: true, description: "", name: "integration")
+            booleanParam(defaultValue: true, description: "", name: "quality")
             booleanParam(defaultValue: true, description: "", name: "security")
             booleanParam(defaultValue: false, description: "", name: "publish")
             booleanParam(defaultValue: false, description: "", name: "deploy")
             booleanParam(defaultValue: true, description: "", name: "functional")
             booleanParam(defaultValue: false, description: "", name: "release")
-            choice(choices: "dev\ntest\nacc\nprod", description: "", name: "env")
+            choice(choices: "quby-test\nelectrabel-test\neneco-acc\nviesgo-acc\nqutility-acc", description: "", name: "env")
             string(defaultValue: "", description: "leave empty to use pom version", name: "version")
         }
 
@@ -92,31 +93,30 @@ def call(body) {
                 }
             }
 
-            stage('sanity checks') {
+            stage ('integration test') {
                 when {
                     expression {
-                        return params.sanity
+                        return params.integration
                     }
                 }
 
-                failFast true
-
-                parallel {
-                    stage("integration test")
-                    steps {
-                        echo "Running Integration Tests..."
-                       // sh "mvn clean verify -P it ${pipelineParams.integration_params}"
-                    }
-
-                    stage("quality")
-                    steps {
-                        echo "Checking quality...."
-                        //sh "mvn clean verify -P quality ${pipelineParams.quality_params}"
-                    }
-
+                steps {
+                    echo "Running Integration Tests..."
+                    sh "mvn clean verify -P it ${pipelineParams.integration_params}"
                 }
             }
 
+            stage("quality") {
+                when {
+                    expression {
+                        return params.quality
+                    }
+                }
+                steps {
+                    echo "Checking quality...."
+                    sh "mvn clean verify -P quality ${pipelineParams.quality_params}"
+                }
+            }
 
             stage("security") {
                 when {
