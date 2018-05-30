@@ -34,17 +34,10 @@ def call(body) {
         }
 
         environment {
-            // MAVEN_OPTS = "-Xms2G -Xmx2G"
-            // HTTP_PROXY  = 'http://localhost:3128'
-            // HTTPS_PROXY = 'http://localhost:3128'
         }
 
         post {
             failure {
-//                mail to: "${pipelineParams.email}",
-//                     subject: "Pipeline Failed: ${pipelineParams.application} [${env.BRANCH_NAME}]",
-//                     body: "Something is wrong with ${env.BUILD_URL}"
-
                 updateGitlabCommitStatus name: 'build', state: 'failed'
             }
 
