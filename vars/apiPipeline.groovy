@@ -1,18 +1,6 @@
 def call(body) {
     // evaluate the body block, and collect configuration into the object
     def pipelineParams= [:]
-    pipelineParams.put('application', '')
-    pipelineParams.put('email', '')
-    pipelineParams.put('agent', 'any')
-    pipelineParams.put('schedule', '0 0 * * *')
-    pipelineParams.put('build_params', '')
-    pipelineParams.put('integration_params', '')
-    pipelineParams.put('quality_params', '')
-    pipelineParams.put('security_params', '')
-    pipelineParams.put('publish_params', '')
-    pipelineParams.put('deploy_params', '')
-    pipelineParams.put('functional_params', '')
-
     body.resolveStrategy = Closure.DELEGATE_FIRST
     body.delegate = pipelineParams
     body()
@@ -22,6 +10,15 @@ def call(body) {
     if (env.BRANCH_NAME == 'develop') {
         cronSchedule = pipelineParams.schedule
     }
+      
+    def build_params = pipelineParams.get('build_params', ['mvn clean install'])
+    def integration_params = pipelineParams.get('integration_params', ['mvn clean verify -Pit'])
+    def quality_params = pipelineParams.get('quality_params', ['mvn cobertura:cobertura'])
+    def security_params = pipelineParams.get('security_params', ['mvn clean install'])
+    def publish_params = pipelineParams.get('publish_params', ['mvn clean deploy'])
+    def deploy_job = pipelineParams.get('deploy_job', ['sc-release'])
+    def functional_params = pipelineParams.get('functional_params', ['mvn clean verify -Pft'])
+    def release_params = pipelineParams.get('release_params', ['mvn release:prepare release:perform'])
 
     pipeline {
         triggers {
@@ -73,7 +70,11 @@ def call(body) {
                 }
                 steps {
                     echo "Building.."
-                    sh "mvn -U clean install"
+                    script {
+                        build_params.each {
+                            sh "${it}"
+                        }
+                    }
                 }
             }
 
@@ -86,7 +87,11 @@ def call(body) {
 
                 steps {
                     echo "Running Integration Tests..."
-                    sh "mvn clean verify -P it ${pipelineParams.integration_params}"
+                    script {
+                        integration_params.each {
+                            sh "${it}"
+                        }
+                    }
                 }
             }
 
@@ -98,7 +103,11 @@ def call(body) {
                 }
                 steps {
                     echo "Checking quality...."
-                    sh "mvn clean verify -P quality ${pipelineParams.quality_params}"
+                    script {
+                        quality_params.each {
+                            sh "${it}"
+                        }
+                    }
                 }
             }
 
@@ -110,7 +119,11 @@ def call(body) {
                 }
                 steps {
                     echo "Checking security...."
-                    sh "mvn clean verify -P security ${pipelineParams.security_params}"
+                    script {
+                        security_params.each {
+                            sh "${it}"
+                        }
+                    }
                 }
             }
 
@@ -123,7 +136,11 @@ def call(body) {
 
                 steps {
                     echo 'publishing...'
-                    sh "mvn clean deploy ${pipelineParams.publish_params}"
+                    script {
+                        publish_params.each {
+                            sh "${it}"
+                        }
+                    }
                 }
             }
 
@@ -136,7 +153,6 @@ def call(body) {
 
                 steps {
                     echo 'deploying...'
-                    deploy app: "${pipelineParams.application}", version: "${params.version}", environment: "${params.env}"
                 }
             }
 
@@ -149,7 +165,11 @@ def call(body) {
 
                 steps {
                     echo 'running functional tests...'
-                    sh "mvn clean verify -P ft -Dtarget.env=${params.env} ${pipelineParams.functional_params}"
+                    script {
+                        functional_params.each {
+                            sh "${it}"
+                        }
+                    }
                 }
             }
 
@@ -159,9 +179,14 @@ def call(body) {
                         return params.release
                     }
                 }
-
+                
                 steps {
                     echo 'release...'
+                    script {
+                        release_params.each {
+                            sh "${it}"
+                        }
+                    }
                 }
             }
         }
